@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean playing = false;
 
     private Attempt mCurrentAttempt;
-    private CountDownTimer mTimeline;
+    private CountDownTimer2 mTimeline;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +41,6 @@ public class MainActivity extends AppCompatActivity {
         mContainer = findViewById(R.id.backgroundLayout);
         mRestartButton = findViewById(R.id.restartButton);
         mResumeButton = findViewById(R.id.resumeButton);
-        mPauseButton = findViewById(R.id.pauseButton);
         title = findViewById(R.id.titleTextView);
         message = findViewById(R.id.taskEditText);
         mTimerText = findViewById(R.id.timeTextView);
@@ -58,20 +57,17 @@ public class MainActivity extends AppCompatActivity {
         mResumeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+            if (playing == true){
+                pauseTimer();
+            }
+            else {
                 if (mCurrentAttempt == null) {
                     prepareAttempt(AttemptKind.FOCUS);
                 }
                 playTimer();
             }
-        });
-
-        mPauseButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                pauseTimer();
             }
         });
-
 
     }
 
@@ -94,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
             addAttemptStyle(kind);
             title.setText(kind.getDisplayName());
             setTimerText(mCurrentAttempt.getRemainingSeconds());
-            mTimeline = new CountDownTimer(kind.getTotalSeconds() * 1000,1000) {
+            mTimeline = new CountDownTimer2(kind.getTotalSeconds() * 1000,1000) {
                 @Override
                 public void onTick(long l) {
                     mCurrentAttempt.tick();
@@ -111,7 +107,6 @@ public class MainActivity extends AppCompatActivity {
                             AttemptKind.BREAK : AttemptKind.FOCUS);
                 }
             };
-
         }
 
         private void saveCurrentAttempt () {
@@ -120,34 +115,38 @@ public class MainActivity extends AppCompatActivity {
         }
 
         private void reset () {
-            //clearAttemptStyles();
+            playing = false;
+            mResumeButton.setText("Resume");
             if (mTimeline != null) {
                 mTimeline.cancel();
             }
         }
 
         public void playTimer () {
-            //container.getStyleClass().add("playing");
+            if (mCurrentAttempt.getRemainingSeconds()< mCurrentAttempt.getKind().getTotalSeconds()){
+                mTimeline.resume();
+            }
+            else{
+                mTimeline.start();
+            }
             playing = true;
-            mTimeline.start();
+            mResumeButton.setText("Pause");
         }
 
        public void pauseTimer () {
             playing = false;
-            mTimeline.cancel();
+            mTimeline.pause();
+            mResumeButton.setText("Resume");
         }
 
         private void addAttemptStyle (AttemptKind kind){
-            //container.getStyleClass().add(kind.toString().toLowerCase());
             switch(kind.toString().toLowerCase())
             {
                 case "focus" :
-                    // TODO: Set focus styles
                     mContainer.setBackgroundColor(Color.parseColor("#637a91"));
                     break;
 
                 case "break" :
-                    // TODO: Set break styles
                     mContainer.setBackgroundColor(Color.parseColor("#39add1"));
                     break;
 
