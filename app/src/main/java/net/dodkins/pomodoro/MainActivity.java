@@ -27,11 +27,12 @@ public class MainActivity extends AppCompatActivity {
     private TextView title;
     private EditText message;
     private TextView mTimerText;
+    private int remainingMilliSeconds;
 
     private boolean playing = false;
 
     private Attempt mCurrentAttempt;
-    private CountDownTimer2 mTimeline;
+    private CountDownTimer mTimeline;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,26 +91,31 @@ public class MainActivity extends AppCompatActivity {
             addAttemptStyle(kind);
             title.setText(kind.getDisplayName());
             setTimerText(mCurrentAttempt.getRemainingSeconds());
-            mTimeline = new CountDownTimer2(kind.getTotalSeconds() * 1000,1000) {
-                @Override
-                public void onTick(long l) {
-                    mCurrentAttempt.tick();
-                    setTimerText(mCurrentAttempt.getRemainingSeconds());
-
-
-                }
-
-                @Override
-                public void onFinish() {
-                    saveCurrentAttempt();
-                    //TODO: Add applause audioclip
-                    prepareAttempt(mCurrentAttempt.getKind() == AttemptKind.FOCUS ?
-                            AttemptKind.BREAK : AttemptKind.FOCUS);
-                }
-            };
+            int milliSeconds = kind.getTotalSeconds() * 1000;
+            createTimer(milliSeconds);
         }
 
-        private void saveCurrentAttempt () {
+    private void createTimer(final int milliSeconds) {
+        mTimeline = new CountDownTimer(milliSeconds,1000) {
+            @Override
+            public void onTick(long l) {
+                mCurrentAttempt.tick();
+                setTimerText(mCurrentAttempt.getRemainingSeconds());
+
+
+            }
+
+            @Override
+            public void onFinish() {
+                saveCurrentAttempt();
+                //TODO: Add applause audioclip
+                prepareAttempt(mCurrentAttempt.getKind() == AttemptKind.FOCUS ?
+                        AttemptKind.BREAK : AttemptKind.FOCUS);
+            }
+        };
+    }
+
+    private void saveCurrentAttempt () {
             mCurrentAttempt.setMessage(message.getText().toString());
             mCurrentAttempt.save();
         }
@@ -123,19 +129,24 @@ public class MainActivity extends AppCompatActivity {
         }
 
         public void playTimer () {
+            createTimer(mCurrentAttempt.getRemainingSeconds() * 1000);
             if (mCurrentAttempt.getRemainingSeconds()< mCurrentAttempt.getKind().getTotalSeconds()){
-                mTimeline.resume();
+                mTimeline.start();
             }
             else{
                 mTimeline.start();
             }
             playing = true;
+
             mResumeButton.setText("Pause");
         }
 
-       public void pauseTimer () {
+        public void pauseTimer () {
+
             playing = false;
-            mTimeline.pause();
+
+            mTimeline.cancel();
+
             mResumeButton.setText("Resume");
         }
 
